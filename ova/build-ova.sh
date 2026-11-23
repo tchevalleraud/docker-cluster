@@ -22,8 +22,8 @@ DATA_VMDK="${BASE}-data.vmdk"
 rm -rf "$WORK"
 mkdir -p "$WORK"
 
-# ESXi only imports streamOptimized VMDKs whose header says version 3;
-# qemu-img writes an older value, so patch the byte at offset 4.
+# ESXi only imports streamOptimized VMDKs whose header says version 3.
+# Recent qemu-img already writes 3; older releases wrote 1, so force it.
 to_stream_vmdk() {
   qemu-img convert -O vmdk -o subformat=streamOptimized,adapter_type=lsilogic,compat6 "$1" "$2"
   printf '\x03' | dd of="$2" bs=1 seek=4 count=1 conv=notrunc status=none
@@ -51,7 +51,7 @@ sed -e "s|@VERSION@|${VERSION}|g" \
     -e "s|@DATA_VMDK_SIZE@|$(stat -c %s "$WORK/$DATA_VMDK")|g" \
     -e "s|@DATA_DISK_GB@|${DATA_DISK_GB}|g" \
     "$HERE/appliance.ovf.in" > "$WORK/${BASE}.ovf"
-if grep -q '@[A-Z_]*@' "$WORK/${BASE}.ovf"; then
+if grep -v '^ *Placeholders' "$WORK/${BASE}.ovf" | grep -q '@[A-Z_]*@'; then
   echo "unfilled placeholder in OVF" >&2
   exit 1
 fi

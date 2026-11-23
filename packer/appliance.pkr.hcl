@@ -36,6 +36,12 @@ variable "output_dir" {
   default = "../output/qemu"
 }
 
+variable "build_ca_cert" {
+  type        = string
+  description = "Optional PEM certificate trusted during the build only (TLS-inspecting proxy). Removed from the final image."
+  default     = ""
+}
+
 variable "appliance_version" {
   type    = string
   default = "dev"
@@ -88,9 +94,11 @@ build {
     execute_command = "echo packer | sudo -S env {{ .Vars }} bash -eux '{{ .Path }}'"
     environment_vars = [
       "APPLIANCE_VERSION=${var.appliance_version}",
+      "BUILD_CA_CERT=${var.build_ca_cert}",
       "DEBIAN_FRONTEND=noninteractive",
     ]
     scripts = [
+      "./scripts/00-build-ca.sh",
       "./scripts/10-base.sh",
       "./scripts/20-docker.sh",
       "./scripts/30-appliance.sh",

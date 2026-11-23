@@ -202,9 +202,12 @@ def write_file(p, content, mode=0o644):
 
 
 def run(*cmd, check=True):
+    """Run a command quietly (its output would clutter the VM console)."""
     if ROOT != "/":  # Test mode: never touch the host.
         return
-    subprocess.run(cmd, check=check)
+    out = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+    if check and out.returncode != 0:
+        raise RuntimeError("%s failed: %s" % (" ".join(cmd), out.stdout.strip()[-300:]))
 
 
 def primary_interface():
@@ -276,7 +279,7 @@ def apply_settings(settings):
 
     write_file("/etc/hostname", settings["hostname"] + "\n")
     write_file("/etc/hosts", render_hosts(settings))
-    run("hostname", settings["hostname"])
+    run("hostnamectl", "set-hostname", settings["hostname"], check=False)
 
     if settings["ntp"]:
         write_file(TIMESYNCD_FILE, "[Time]\nNTP=%s\n" % " ".join(settings["ntp"]))
@@ -288,6 +291,17 @@ def apply_settings(settings):
     apply_ssh(settings["ssh"])
     run("netplan", "apply")
     save_settings(settings)
+
+
+def current_keyboard():
+    try:
+        with open(path(KEYBOARD_FILE)) as f:
+            m = re.search(r'^XKBLAYOUT="?([a-z]+)', f.read(), re.M)
+            if m:
+                return m.group(1)
+    except OSError:
+        pass
+    return "us"
 
 
 def apply_keyboard(layout):
@@ -390,8 +404,12 @@ def cmd_firstboot():
 # --------------------------------------------------------------------------
 
 def current_ipv4():
+    """IPv4 addresses of the management interface (not Docker bridges)."""
+    iface, _ = primary_interface()
+    if not iface:
+        return []
     try:
-        out = subprocess.run(["ip", "-4", "-o", "addr", "show", "scope", "global"],
+        out = subprocess.run(["ip", "-4", "-o", "addr", "show", "dev", iface, "scope", "global"],
                              capture_output=True, text=True).stdout
     except OSError:
         return []
@@ -435,6 +453,15 @@ def banner():
         print()
 
 
+def flush_input():
+    """Drop keys typed while the appliance was busy (they would be echoed)."""
+    try:
+        import termios
+        termios.tcflush(sys.stdin, termios.TCIFLUSH)
+    except Exception:
+        pass
+
+
 def ask(label, default=""):
     suffix = " [%s]" % default if default else ""
     value = input("  %s%s: " % (label, suffix)).strip()
@@ -442,6 +469,7 @@ def ask(label, default=""):
 
 
 def ask_password(confirm=True):
+    flush_input()
     while True:
         pw = getpass.getpass("  New admin password: ")
         if len(pw) < 8:
@@ -462,8 +490,12 @@ def network_wizard():
     print()
     print("  Network settings (Ctrl+C to cancel)")
     print()
-    kb = ask("Keyboard layout (%s)" % "/".join(KEYBOARD_LAYOUTS), current.get("keyboard", "us"))
-    if kb in KEYBOARD_LAYOUTS and kb != current.get("keyboard"):
+    active_kb = current_keyboard()
+    kb = ask("Keyboard layout (%s)" % "/".join(KEYBOARD_LAYOUTS), active_kb)
+    if kb not in KEYBOARD_LAYOUTS:
+        kb = active_kb
+    if kb != active_kb:
+        print("  Switching keyboard layout...")
         apply_keyboard(kb)
     while True:
         s = {
@@ -559,6 +591,7 @@ def cmd_console():
                 setup_flow()
                 continue
             pause("Press Enter to log in.")
+            flush_input()
             pw = getpass.getpass("  admin password: ")
             if not check_password(pw):
                 print("  Wrong password.")

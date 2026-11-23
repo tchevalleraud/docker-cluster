@@ -14,6 +14,7 @@ apt-get -y install --no-install-recommends \
   ca-certificates curl gnupg \
   less nano \
   openssh-server \
+  netplan.io \
   systemd-timesyncd
 
 # Make sure the ESXi drivers (paravirtual SCSI, vmxnet3) are in the initramfs:
@@ -27,5 +28,6 @@ done
 update-initramfs -u -k all
 
 # Boot console on the VM screen (tty1), no serial-only output, short menu.
+rm -f /etc/default/grub.d/40-force-partuuid.cfg
 install -m 0644 /tmp/rootfs/etc/default/grub.d/99-appliance.cfg /etc/default/grub.d/99-appliance.cfg
 update-grub

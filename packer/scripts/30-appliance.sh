@@ -4,7 +4,8 @@ set -euxo pipefail
 
 # Local administrator. Password comes from the OVF properties on first boot.
 if ! id admin >/dev/null 2>&1; then
-  useradd --create-home --shell /bin/bash --groups sudo,docker admin
+  # Ubuntu already ships an "admin" group (legacy sudo group): reuse it.
+  useradd --create-home --shell /bin/bash --gid admin --groups sudo,docker admin
 fi
 passwd -l admin
 
