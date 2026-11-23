@@ -1,0 +1,15 @@
+[Unit]
+Description=Docker Cluster appliance first-boot configuration
+After=systemd-networkd.service vmtoolsd.service local-fs.target
+Wants=systemd-networkd.service
+Before=ssh.service ssh.socket getty@tty1.service docker.service
+ConditionPathExists=!/var/lib/dc-appliance/configured
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/dc-appliance firstboot
+RemainAfterExit=yes
+StandardOutput=journal+console
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,6 @@
+output/
+packer_cache/
+*.ova
+*.vmdk
+*.qcow2
+__pycache__/

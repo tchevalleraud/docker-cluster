@@ -1,0 +1,9 @@
+#cloud-config
+# Build-time only: cloud-init is purged from the final image.
+users:
+  - name: packer
+    plain_text_passwd: packer
+    lock_passwd: false
+    shell: /bin/bash
+    sudo: ALL=(ALL) NOPASSWD:ALL
+ssh_pwauth: true

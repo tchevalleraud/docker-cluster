@@ -1,0 +1,10 @@
+# Used only until the appliance is configured (OVF properties or VM console).
+network:
+  version: 2
+  renderer: networkd
+  ethernets:
+    fallback:
+      match:
+        name: "en*"
+      dhcp4: true
+      optional: true
