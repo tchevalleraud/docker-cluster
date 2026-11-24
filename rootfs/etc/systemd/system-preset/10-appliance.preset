@@ -1,0 +1,3 @@
+# SSH stays off unless enabled through the OVF properties or the VM console.
+disable ssh.service
+disable ssh.socket

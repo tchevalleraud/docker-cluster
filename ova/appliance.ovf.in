@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Docker Cluster appliance - OVF descriptor template.
+  Placeholders @NAME@ are filled by ova/build-ova.sh.
+  Target: ESXi 6.5 and later (virtual hardware vmx-13).
+-->
+<Envelope xmlns="http://schemas.dmtf.org/ovf/envelope/1"
+          xmlns:ovf="http://schemas.dmtf.org/ovf/envelope/1"
+          xmlns:cim="http://schemas.dmtf.org/wbem/wscim/1/common"
+          xmlns:rasd="http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_ResourceAllocationSettingData"
+          xmlns:vssd="http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_VirtualSystemSettingData"
+          xmlns:vmw="http://www.vmware.com/schema/ovf"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <References>
+    <File ovf:href="@SYSTEM_VMDK@" ovf:id="file1" ovf:size="@SYSTEM_VMDK_SIZE@"/>
+    <File ovf:href="@DATA_VMDK@" ovf:id="file2" ovf:size="@DATA_VMDK_SIZE@"/>
+  </References>
+  <DiskSection>
+    <Info>Virtual disk information</Info>
+    <Disk ovf:diskId="system" ovf:fileRef="file1"
+          ovf:capacity="@SYSTEM_DISK_GB@" ovf:capacityAllocationUnits="byte * 2^30"
+          ovf:format="http://www.vmware.com/interfaces/specifications/vmdk.html#streamOptimized"/>
+    <Disk ovf:diskId="data" ovf:fileRef="file2"
+          ovf:capacity="@DATA_DISK_GB@" ovf:capacityAllocationUnits="byte * 2^30"
+          ovf:format="http://www.vmware.com/interfaces/specifications/vmdk.html#streamOptimized"/>
+  </DiskSection>
+  <NetworkSection>
+    <Info>Logical networks</Info>
+    <Network ovf:name="VM Network">
+      <Description>Management and cluster network</Description>
+    </Network>
+  </NetworkSection>
+  <VirtualSystem ovf:id="@VM_NAME@">
+    <Info>Docker Cluster appliance</Info>
+    <Name>@VM_NAME@</Name>
+    <AnnotationSection>
+      <Info>Description</Info>
+      <Annotation>Docker Cluster appliance @VERSION@. Runs as a standalone node or joins a cluster from the management UI.</Annotation>
+    </AnnotationSection>
+    <OperatingSystemSection ovf:id="94" vmw:osType="ubuntu64Guest">
+      <Info>Guest operating system</Info>
+      <Description>Ubuntu Linux (64-bit)</Description>
+    </OperatingSystemSection>
+    <VirtualHardwareSection ovf:transport="com.vmware.guestInfo">
+      <Info>Virtual hardware requirements</Info>
+      <System>
+        <vssd:ElementName>Virtual Hardware Family</vssd:ElementName>
+        <vssd:InstanceID>0</vssd:InstanceID>
+        <vssd:VirtualSystemIdentifier>@VM_NAME@</vssd:VirtualSystemIdentifier>
+        <vssd:VirtualSystemType>vmx-13</vssd:VirtualSystemType>
+      </System>
+      <Item>
+        <rasd:AllocationUnits>hertz * 10^6</rasd:AllocationUnits>
+        <rasd:Description>Number of virtual CPUs</rasd:Description>
+        <rasd:ElementName>@CPUS@ virtual CPU(s)</rasd:ElementName>
+        <rasd:InstanceID>1</rasd:InstanceID>
+        <rasd:ResourceType>3</rasd:ResourceType>
+        <rasd:VirtualQuantity>@CPUS@</rasd:VirtualQuantity>
+      </Item>
+      <Item>
+        <rasd:AllocationUnits>byte * 2^20</rasd:AllocationUnits>
+        <rasd:Description>Memory size</rasd:Description>
+        <rasd:ElementName>@MEMORY_MB@ MB of memory</rasd:ElementName>
+        <rasd:InstanceID>2</rasd:InstanceID>
+        <rasd:ResourceType>4</rasd:ResourceType>
+        <rasd:VirtualQuantity>@MEMORY_MB@</rasd:VirtualQuantity>
+      </Item>
+      <Item>
+        <rasd:Address>0</rasd:Address>
+        <rasd:Description>SCSI Controller</rasd:Description>
+        <rasd:ElementName>SCSI controller 0</rasd:ElementName>
+        <rasd:InstanceID>3</rasd:InstanceID>
+        <rasd:ResourceSubType>VirtualSCSI</rasd:ResourceSubType>
+        <rasd:ResourceType>6</rasd:ResourceType>
+      </Item>
+      <Item>
+        <rasd:AddressOnParent>0</rasd:AddressOnParent>
+        <rasd:ElementName>Hard disk 1 (system)</rasd:ElementName>
+        <rasd:HostResource>ovf:/disk/system</rasd:HostResource>
+        <rasd:InstanceID>4</rasd:InstanceID>
+        <rasd:Parent>3</rasd:Parent>
+        <rasd:ResourceType>17</rasd:ResourceType>
+      </Item>
+      <Item>
+        <rasd:AddressOnParent>1</rasd:AddressOnParent>
+        <rasd:ElementName>Hard disk 2 (data)</rasd:ElementName>
+        <rasd:HostResource>ovf:/disk/data</rasd:HostResource>
+        <rasd:InstanceID>5</rasd:InstanceID>
+        <rasd:Parent>3</rasd:Parent>
+        <rasd:ResourceType>17</rasd:ResourceType>
+      </Item>
+      <Item>
+        <rasd:AddressOnParent>7</rasd:AddressOnParent>
+        <rasd:AutomaticAllocation>true</rasd:AutomaticAllocation>
+        <rasd:Connection>VM Network</rasd:Connection>
+        <rasd:Description>VMXNET3 ethernet adapter on "VM Network"</rasd:Description>
+        <rasd:ElementName>Network adapter 1</rasd:ElementName>
+        <rasd:InstanceID>6</rasd:InstanceID>
+        <rasd:ResourceSubType>VmxNet3</rasd:ResourceSubType>
+        <rasd:ResourceType>10</rasd:ResourceType>
+      </Item>
+      <Item ovf:required="false">
+        <rasd:AutomaticAllocation>false</rasd:AutomaticAllocation>
+        <rasd:ElementName>Video card</rasd:ElementName>
+        <rasd:InstanceID>7</rasd:InstanceID>
+        <rasd:ResourceType>24</rasd:ResourceType>
+      </Item>
+      <vmw:Config ovf:required="false" vmw:key="tools.syncTimeWithHost" vmw:value="false"/>
+      <vmw:Config ovf:required="false" vmw:key="tools.afterPowerOn" vmw:value="true"/>
+      <vmw:Config ovf:required="false" vmw:key="tools.beforeGuestShutdown" vmw:value="true"/>
+      <vmw:Config ovf:required="false" vmw:key="powerOpInfo.powerOffType" vmw:value="soft"/>
+      <vmw:Config ovf:required="false" vmw:key="powerOpInfo.resetType" vmw:value="soft"/>
+    </VirtualHardwareSection>
+    <ProductSection ovf:required="false">
+      <Info>Appliance settings applied on first boot</Info>
+      <Product>Docker Cluster appliance</Product>
+      <Vendor>docker-cluster</Vendor>
+      <Version>@VERSION@</Version>
+      <FullVersion>@VERSION@</FullVersion>
+      <Category>Network</Category>
+      <Property ovf:key="appliance.hostname" ovf:type="string" ovf:userConfigurable="true" ovf:value="docker-node">
+        <Label>Hostname</Label>
+        <Description>Short host name of this node (letters, digits and dashes).</Description>
+      </Property>
+      <Property ovf:key="appliance.domain" ovf:type="string" ovf:userConfigurable="true" ovf:value="">
+        <Label>Domain</Label>
+        <Description>DNS domain, optional (example: lab.local).</Description>
+      </Property>
+      <Property ovf:key="appliance.ip" ovf:type="string" ovf:userConfigurable="true" ovf:value="">
+        <Label>IP address</Label>
+        <Description>Static IPv4 address of this node (example: 192.168.1.10).</Description>
+      </Property>
+      <Property ovf:key="appliance.prefix" ovf:type="string" ovf:userConfigurable="true" ovf:value="24">
+        <Label>Network prefix</Label>
+        <Description>Prefix length of the network (24 means 255.255.255.0).</Description>
+      </Property>
+      <Property ovf:key="appliance.gateway" ovf:type="string" ovf:userConfigurable="true" ovf:value="">
+        <Label>Gateway</Label>
+        <Description>Default gateway (example: 192.168.1.1).</Description>
+      </Property>
+      <Property ovf:key="appliance.dns" ovf:type="string" ovf:userConfigurable="true" ovf:value="">
+        <Label>DNS servers</Label>
+        <Description>Comma separated list of DNS servers (example: 192.168.1.1, 1.1.1.1).</Description>
+      </Property>
+      <Property ovf:key="appliance.ntp" ovf:type="string" ovf:userConfigurable="true" ovf:value="">
+        <Label>NTP servers</Label>
+        <Description>Comma separated list of NTP servers, optional (Ubuntu servers are used when empty).</Description>
+      </Property>
+      <Category>System</Category>
+      <Property ovf:key="appliance.password" ovf:type="string" ovf:userConfigurable="true" ovf:password="true" ovf:value="" ovf:qualifiers="MinLen(8)">
+        <Label>Admin password</Label>
+        <Description>Password of the "admin" account (8 characters minimum). When empty, it is asked on the VM console.</Description>
+      </Property>
+      <Property ovf:key="appliance.keyboard" ovf:type="string" ovf:userConfigurable="true" ovf:value="us"
+                ovf:qualifiers="ValueMap{&quot;us&quot;,&quot;fr&quot;,&quot;be&quot;,&quot;ch&quot;,&quot;de&quot;,&quot;gb&quot;,&quot;es&quot;,&quot;it&quot;}">
+        <Label>Console keyboard layout</Label>
+        <Description>Keyboard layout of the VM console.</Description>
+      </Property>
+      <Property ovf:key="appliance.ssh" ovf:type="boolean" ovf:userConfigurable="true" ovf:value="false">
+        <Label>Enable SSH</Label>
+        <Description>Allow SSH logins with the admin account.</Description>
+      </Property>
+    </ProductSection>
+  </VirtualSystem>
+</Envelope>
