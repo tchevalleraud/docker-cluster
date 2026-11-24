@@ -71,8 +71,17 @@ jobs:
         with:
           name: docker-cluster-${{ steps.version.outputs.version }}
           path: |
-            output/*.ova
-            output/*.ova.sha256
+            output/docker-cluster-${{ steps.version.outputs.version }}.ova
+            output/docker-cluster-${{ steps.version.outputs.version }}.ova.sha256
+          retention-days: 14
+          compression-level: 0
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: docker-cluster-${{ steps.version.outputs.version }}-noprops
+          path: |
+            output/docker-cluster-${{ steps.version.outputs.version }}-noprops.ova
+            output/docker-cluster-${{ steps.version.outputs.version }}-noprops.ova.sha256
           retention-days: 14
           compression-level: 0
 
