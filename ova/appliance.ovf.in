@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
   Docker Cluster appliance - OVF descriptor template.
-  Placeholders @NAME@ are filled by ova/build-ova.sh.
+  Placeholders are filled by ova/build-ova.sh.
   Target: ESXi 6.5 and later (virtual hardware vmx-13).
 -->
 <Envelope xmlns="http://schemas.dmtf.org/ovf/envelope/1"
@@ -41,7 +41,7 @@
       <Info>Guest operating system</Info>
       <Description>Ubuntu Linux (64-bit)</Description>
     </OperatingSystemSection>
-    <VirtualHardwareSection ovf:transport="com.vmware.guestInfo">
+    <VirtualHardwareSection@TRANSPORT@>
       <Info>Virtual hardware requirements</Info>
       <System>
         <vssd:ElementName>Virtual Hardware Family</vssd:ElementName>
@@ -93,17 +93,11 @@
         <rasd:AddressOnParent>7</rasd:AddressOnParent>
         <rasd:AutomaticAllocation>true</rasd:AutomaticAllocation>
         <rasd:Connection>VM Network</rasd:Connection>
-        <rasd:Description>VMXNET3 ethernet adapter on "VM Network"</rasd:Description>
+        <rasd:Description>VMXNET3 ethernet adapter</rasd:Description>
         <rasd:ElementName>Network adapter 1</rasd:ElementName>
         <rasd:InstanceID>6</rasd:InstanceID>
         <rasd:ResourceSubType>VmxNet3</rasd:ResourceSubType>
         <rasd:ResourceType>10</rasd:ResourceType>
-      </Item>
-      <Item ovf:required="false">
-        <rasd:AutomaticAllocation>false</rasd:AutomaticAllocation>
-        <rasd:ElementName>Video card</rasd:ElementName>
-        <rasd:InstanceID>7</rasd:InstanceID>
-        <rasd:ResourceType>24</rasd:ResourceType>
       </Item>
       <vmw:Config ovf:required="false" vmw:key="tools.syncTimeWithHost" vmw:value="false"/>
       <vmw:Config ovf:required="false" vmw:key="tools.afterPowerOn" vmw:value="true"/>
@@ -111,13 +105,13 @@
       <vmw:Config ovf:required="false" vmw:key="powerOpInfo.powerOffType" vmw:value="soft"/>
       <vmw:Config ovf:required="false" vmw:key="powerOpInfo.resetType" vmw:value="soft"/>
     </VirtualHardwareSection>
-    <ProductSection ovf:required="false">
+    <!-- PROPERTIES-BEGIN -->
+    <ProductSection>
       <Info>Appliance settings applied on first boot</Info>
       <Product>Docker Cluster appliance</Product>
       <Vendor>docker-cluster</Vendor>
       <Version>@VERSION@</Version>
       <FullVersion>@VERSION@</FullVersion>
-      <Category>Network</Category>
       <Property ovf:key="appliance.hostname" ovf:type="string" ovf:userConfigurable="true" ovf:value="docker-node">
         <Label>Hostname</Label>
         <Description>Short host name of this node (letters, digits and dashes).</Description>
@@ -146,20 +140,19 @@
         <Label>NTP servers</Label>
         <Description>Comma separated list of NTP servers, optional (Ubuntu servers are used when empty).</Description>
       </Property>
-      <Category>System</Category>
-      <Property ovf:key="appliance.password" ovf:type="string" ovf:userConfigurable="true" ovf:password="true" ovf:value="" ovf:qualifiers="MinLen(8)">
+      <Property ovf:key="appliance.password" ovf:type="string" ovf:userConfigurable="true" ovf:password="true" ovf:value="">
         <Label>Admin password</Label>
         <Description>Password of the "admin" account (8 characters minimum). When empty, it is asked on the VM console.</Description>
       </Property>
-      <Property ovf:key="appliance.keyboard" ovf:type="string" ovf:userConfigurable="true" ovf:value="us"
-                ovf:qualifiers="ValueMap{&quot;us&quot;,&quot;fr&quot;,&quot;be&quot;,&quot;ch&quot;,&quot;de&quot;,&quot;gb&quot;,&quot;es&quot;,&quot;it&quot;}">
+      <Property ovf:key="appliance.keyboard" ovf:type="string" ovf:userConfigurable="true" ovf:value="us">
         <Label>Console keyboard layout</Label>
-        <Description>Keyboard layout of the VM console.</Description>
+        <Description>Keyboard layout of the VM console: us, fr, be, ch, de, gb, es or it.</Description>
       </Property>
-      <Property ovf:key="appliance.ssh" ovf:type="boolean" ovf:userConfigurable="true" ovf:value="false">
+      <Property ovf:key="appliance.ssh" ovf:type="string" ovf:userConfigurable="true" ovf:value="false">
         <Label>Enable SSH</Label>
-        <Description>Allow SSH logins with the admin account.</Description>
+        <Description>true to allow SSH logins with the admin account, false otherwise.</Description>
       </Property>
     </ProductSection>
+    <!-- PROPERTIES-END -->
   </VirtualSystem>
 </Envelope>

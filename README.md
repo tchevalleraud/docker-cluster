@@ -33,19 +33,28 @@ management unique.
    | DNS servers | `192.168.1.1, 1.1.1.1` | conseillé |
    | Domain, NTP servers | | non |
    | Admin password | 8 caractères minimum | conseillé |
-   | Console keyboard layout | `fr` | non |
-   | Enable SSH | non par défaut | non |
+   | Console keyboard layout | `fr` (us, fr, be, ch, de, gb, es, it) | non |
+   | Enable SSH | `false` (mettre `true` pour activer) | non |
 
 3. Démarrer la VM. Au premier démarrage, elle applique ces réglages (réseau
    statique, nom, mot de passe du compte `admin`, SSH) puis affiche son
    adresse sur la console.
 
-### Si les propriétés n'apparaissent pas
+### Si le Host Client plante ou n'affiche pas les propriétés
 
-Certaines versions du Host Client 6.5 n'affichent pas les propriétés OVF ou ne
-les transmettent pas à la VM. Dans ce cas la VM démarre en DHCP et la console
-de la VM (écran ESXi) propose un assistant : clavier, nom, IP, passerelle, DNS,
-puis mot de passe admin. Aucune ligne de commande n'est nécessaire.
+Les anciens Host Client d'ESXi 6.5 (par exemple la 1.27.1) peuvent planter sur la
+page des propriétés OVF (`TypeError: Cannot read properties of undefined
+(reading 'enabled')`). Deux solutions :
+
+- Déployer **`docker-cluster-<version>-noprops.ova`** : la même image, sans
+  propriétés OVF. La VM démarre en DHCP et la console de la VM (écran ESXi)
+  propose un assistant : clavier, nom, IP, passerelle, DNS, puis mot de passe
+  admin. Aucune ligne de commande n'est nécessaire.
+- Mettre à jour le Host Client (VIB `esx-ui`) vers la dernière version publiée
+  pour ESXi 6.5.
+
+Avec l'OVA standard, si les propriétés ne sont pas transmises à la VM, le même
+assistant prend le relais.
 
 Si l'import d'un gros `.ova` échoue dans le Host Client, extraire l'archive
 (`tar -xf docker-cluster-<version>.ova`) et déployer avec les fichiers `.ovf`
@@ -61,7 +70,7 @@ sur tty2 (Alt+F2).
 ## Construire l'OVA
 
 Le build tourne dans GitHub Actions (`.github/workflows/build-ova.yml`) à chaque
-push et PR. L'OVA est disponible dans les artefacts du run, et attaché à la
+push et PR. Les deux OVA (standard et `-noprops`) sont disponibles dans les artefacts du run, et attachées à la
 release quand on pousse un tag `v*`.
 
 En local (Linux avec KVM) :
